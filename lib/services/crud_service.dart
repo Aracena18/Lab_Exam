@@ -1,48 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CrudService {
-  final CollectionReference items =
-      FirebaseFirestore.instance.collection('items');
+  final CollectionReference foods =
+      FirebaseFirestore.instance.collection('foods');
 
   // CREATE
-  Future<void> addItem(String name, int quantity) {
-    return items.add({
+  Future<void> addFood(String name) {
+    return foods.add({
       'name': name,
-      'quantity': quantity,
       'created_at': Timestamp.now(),
-      'is_favorite': false,
     });
   }
 
   // READ
-  Stream<QuerySnapshot> getItems() {
-    return items.orderBy('created_at', descending: true).snapshots();
+  Stream<QuerySnapshot> getFoods() {
+    return foods.orderBy('created_at', descending: true).snapshots();
   }
 
   // UPDATE
-  Future<void> updateItem(
-    String id,
-    String name,
-    int quantity,
-  ) {
-    return items.doc(id).update({
+  Future<void> updateFood(String id, String name) {
+    return foods.doc(id).update({
       'name': name,
-      'quantity': quantity,
-    });
-  }
-
-  // EXTRA UPDATE EXAMPLE
-  Future<void> toggleFavorite(
-    String id,
-    bool currentStatus,
-  ) {
-    return items.doc(id).update({
-      'is_favorite': !currentStatus,
     });
   }
 
   // DELETE
-  Future<void> deleteItem(String id) {
-    return items.doc(id).delete();
+  Future<void> deleteFood(String id) {
+    return foods.doc(id).delete();
   }
 }

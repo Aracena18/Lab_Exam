@@ -1,147 +1,75 @@
-# Firebase CRUD Lab Exam Cheat Sheet
+# Lab Exam 2 Firestore CRUD Cheat Sheet
 
-## 1. Firebase initialization
+## Collection
 
 ```dart
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const MyApp());
-}
+final CollectionReference foods =
+    FirebaseFirestore.instance.collection('foods');
 ```
 
-## 2. Firestore collection
+## CREATE
 
 ```dart
-final CollectionReference items =
-    FirebaseFirestore.instance.collection('items');
-```
-
-## 3. CREATE
-
-```dart
-items.add({
+foods.add({
   'name': name,
-  'quantity': quantity,
   'created_at': Timestamp.now(),
 });
 ```
 
-## 4. READ
+## READ
 
 ```dart
-Stream<QuerySnapshot> getItems() {
-  return items.snapshots();
-}
+foods.orderBy('created_at', descending: true).snapshots();
 ```
 
-Use it with:
+Use the stream in:
 
 ```dart
 StreamBuilder<QuerySnapshot>(
-  stream: service.getItems(),
+  stream: service.getFoods(),
   builder: (context, snapshot) {
-    if (!snapshot.hasData) {
-      return const CircularProgressIndicator();
-    }
-
-    final docs = snapshot.data!.docs;
-
-    return ListView.builder(
-      itemCount: docs.length,
-      itemBuilder: (context, index) {
-        final item = docs[index];
-        final data =
-            item.data() as Map<String, dynamic>;
-
-        return ListTile(
-          title: Text(data['name']),
-          subtitle: Text(
-            'Quantity ${data['quantity']}',
-          ),
-        );
-      },
-    );
+    final foods = snapshot.data!.docs;
+    // Build the food list here.
   },
 )
 ```
 
-## 5. UPDATE
+## UPDATE
 
 ```dart
-items.doc(id).update({
+foods.doc(id).update({
   'name': name,
-  'quantity': quantity,
 });
 ```
 
-## 6. DELETE
+## DELETE
 
 ```dart
-items.doc(id).delete();
+foods.doc(id).delete();
 ```
 
-## 7. Favorite field
-
-When creating:
+## Input Validation
 
 ```dart
-'is_favorite': false,
+final name = foodController.text.trim();
+
+if (name.isEmpty) {
+  return;
+}
 ```
 
-Toggle:
+## Files to remember
 
-```dart
-items.doc(id).update({
-  'is_favorite': !currentStatus,
-});
+```text
+lib/main.dart
+lib/firebase_options.dart
+lib/screens/home_page.dart
+lib/services/crud_service.dart
 ```
 
-Filter:
-
-```dart
-docs = docs.where((doc) {
-  final data =
-      doc.data() as Map<String, dynamic>;
-
-  return data['is_favorite'] == true;
-}).toList();
-```
-
-## 8. Commands to remember
+## Run
 
 ```bash
 flutter pub get
-firebase login
-flutterfire configure
 flutter run
-```
-
-If the platform folders are missing:
-
-```bash
-flutter create . --project-name lab_exam
-```
-
-## 9. Mental model
-
-```text
-UI
-↓
-CrudService
-↓
-FirebaseFirestore.instance
-↓
-collection('items')
-↓
-documents
-```
-
-The four Firestore calls to remember:
-
-```dart
-.add()
-.snapshots()
-.update()
-.delete()
 ```

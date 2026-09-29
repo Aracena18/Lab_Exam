@@ -13,27 +13,40 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final CrudService service = CrudService();
   final TextEditingController foodController = TextEditingController();
+  final TextEditingController editController = TextEditingController();
 
   @override
   void dispose() {
     foodController.dispose();
+    editController.dispose();
     super.dispose();
+  }
+
+  void showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<void> addFood() async {
     final String name = foodController.text.trim();
 
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a food name.'),
-        ),
-      );
+      showMessage('Please enter a food name.');
       return;
     }
 
-    await service.addFood(name);
-    foodController.clear();
+    try {
+      await service.addFood(name);
+      foodController.clear();
+      showMessage('Food added successfully.');
+    } on FirebaseException catch (e) {
+      showMessage('Firebase error: ${e.code}');
+    } catch (e) {
+      showMessage('Error: $e');
+    }
   }
 
   @override
@@ -93,8 +106,11 @@ class _HomePageState extends State<HomePage> {
                   stream: service.getFoods(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
-                      return const Center(
-                        child: Text('Unable to load food list.'),
+                      return Center(
+                        child: Text(
+                          'Firestore error: ${snapshot.error}',
+                          textAlign: TextAlign.center,
+                        ),
                       );
                     }
 
@@ -180,10 +196,7 @@ class _HomePageState extends State<HomePage> {
     DocumentSnapshot food,
   ) {
     final data = food.data() as Map<String, dynamic>;
-    final TextEditingController editController =
-        TextEditingController(
-      text: data['name']?.toString() ?? '',
-    );
+    editController.text = data['name']?.toString() ?? '';
 
     showDialog(
       context: context,
@@ -208,12 +221,23 @@ class _HomePageState extends State<HomePage> {
             onPressed: () async {
               final String name = editController.text.trim();
 
-              if (name.isNotEmpty) {
+              if (name.isEmpty) {
+                showMessage('Food name cannot be empty.');
+                return;
+              }
+
+              try {
                 await service.updateFood(food.id, name);
 
                 if (dialogContext.mounted) {
                   Navigator.pop(dialogContext);
                 }
+
+                showMessage('Food updated successfully.');
+              } on FirebaseException catch (e) {
+                showMessage('Firebase error: ${e.code}');
+              } catch (e) {
+                showMessage('Error: $e');
               }
             },
             style: ElevatedButton.styleFrom(
@@ -224,7 +248,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    ).then((_) => editController.dispose());
+    );
   }
 
   void confirmDelete(
@@ -247,10 +271,18 @@ class _HomePageState extends State<HomePage> {
           ),
           TextButton(
             onPressed: () async {
-              await service.deleteFood(id);
+              try {
+                await service.deleteFood(id);
 
-              if (dialogContext.mounted) {
-                Navigator.pop(dialogContext);
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                }
+
+                showMessage('Food deleted successfully.');
+              } on FirebaseException catch (e) {
+                showMessage('Firebase error: ${e.code}');
+              } catch (e) {
+                showMessage('Error: $e');
               }
             },
             child: const Text(

@@ -15,6 +15,12 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController foodController = TextEditingController();
   final TextEditingController editController = TextEditingController();
 
+  static const Color primaryBlue = Color(0xFF075F7D);
+  static const Color editGray = Color(0xFF555555);
+  static const Color deleteRed = Color(0xFFC75C5C);
+  static const Color hintGray = Color(0xFFA9A9A9);
+  static const Color textBlack = Color(0xFF222222);
+
   @override
   void dispose() {
     foodController.dispose();
@@ -30,19 +36,18 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // CREATE: validates input before saving a food task to Firestore.
+  // CREATE: validates the input before saving a task to Firestore.
   Future<void> addFood() async {
     final String name = foodController.text.trim();
 
     if (name.isEmpty) {
-      showMessage('Please enter a food name.');
+      showMessage('Please enter a task.');
       return;
     }
 
     try {
       await service.addFood(name);
       foodController.clear();
-      showMessage('Food added successfully.');
     } on FirebaseException catch (e) {
       showMessage('Firebase error: ${e.code}');
     } catch (e) {
@@ -53,57 +58,95 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Labexam2_ARACENA'),
-        centerTitle: true,
-        backgroundColor: Colors.teal,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: textBlack,
+        elevation: 0,
+        surfaceTintColor: Colors.white,
+        centerTitle: false,
+        titleSpacing: 24,
+        title: const Text(
+          'Labexam2_ARACENA',
+          style: TextStyle(
+            fontSize: 25,
+            fontWeight: FontWeight.w700,
+            color: textBlack,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.more_horiz,
+              color: textBlack,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+        ],
       ),
-      // Single-page Food List interface required by the lab exam.
+
+      // Single-page layout based on the provided lab-exam reference design.
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
           child: Column(
             children: [
-              Card(
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: foodController,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => addFood(),
-                          decoration: const InputDecoration(
-                            labelText: 'Food Name',
-                            hintText: 'Enter food item',
-                            border: OutlineInputBorder(),
-                          ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: foodController,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => addFood(),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        color: textBlack,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'Add a new task...',
+                        hintStyle: TextStyle(
+                          color: hintGray,
+                          fontSize: 17,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 18,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      ElevatedButton.icon(
-                        onPressed: addFood,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 18,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 62,
+                    height: 62,
+                    child: ElevatedButton(
+                      onPressed: addFood,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryBlue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        size: 30,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              // READ: StreamBuilder listens to Firestore for automatic updates.
+              const SizedBox(height: 24),
+
+              // READ: automatically rebuilds whenever Firestore data changes.
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: service.getFoods(),
@@ -119,7 +162,9 @@ class _HomePageState extends State<HomePage> {
 
                     if (!snapshot.hasData) {
                       return const Center(
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(
+                          color: primaryBlue,
+                        ),
                       );
                     }
 
@@ -128,59 +173,63 @@ class _HomePageState extends State<HomePage> {
                     if (foods.isEmpty) {
                       return const Center(
                         child: Text(
-                          'No food items yet.',
-                          style: TextStyle(fontSize: 18),
+                          'No tasks yet.',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: hintGray,
+                          ),
                         ),
                       );
                     }
 
-                    return ListView.builder(
+                    return ListView.separated(
+                      padding: EdgeInsets.zero,
                       itemCount: foods.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: 18),
                       itemBuilder: (context, index) {
                         final food = foods[index];
                         final data =
                             food.data() as Map<String, dynamic>;
 
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          child: ListTile(
-                            leading: const CircleAvatar(
-                              backgroundColor: Colors.teal,
-                              foregroundColor: Colors.white,
-                              child: Icon(Icons.restaurant),
-                            ),
-                            title: Text(
-                              data['name']?.toString() ?? '',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                data['name']?.toString() ?? '',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: textBlack,
+                                ),
                               ),
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  tooltip: 'Edit',
-                                  onPressed: () {
-                                    openEditDialog(context, food);
-                                  },
-                                  icon: const Icon(
-                                    Icons.edit,
-                                    color: Colors.orange,
-                                  ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Delete',
-                                  onPressed: () {
-                                    confirmDelete(context, food.id);
-                                  },
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ],
+                            IconButton(
+                              tooltip: 'Edit',
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () {
+                                openEditDialog(context, food);
+                              },
+                              icon: const Icon(
+                                Icons.edit,
+                                color: editGray,
+                                size: 21,
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 2),
+                            IconButton(
+                              tooltip: 'Delete',
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () {
+                                confirmDelete(context, food.id);
+                              },
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: deleteRed,
+                                size: 22,
+                              ),
+                            ),
+                          ],
                         );
                       },
                     );
@@ -194,7 +243,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // UPDATE: opens a dialog and edits the selected Firestore document.
+  // UPDATE: opens a simple edit dialog for the selected task.
   void openEditDialog(
     BuildContext context,
     DocumentSnapshot food,
@@ -205,13 +254,12 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit Food'),
+        title: const Text('Edit Task'),
         content: TextField(
           controller: editController,
           autofocus: true,
           decoration: const InputDecoration(
-            labelText: 'Food Name',
-            border: OutlineInputBorder(),
+            hintText: 'Task name',
           ),
         ),
         actions: [
@@ -221,12 +269,12 @@ class _HomePageState extends State<HomePage> {
             },
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
               final String name = editController.text.trim();
 
               if (name.isEmpty) {
-                showMessage('Food name cannot be empty.');
+                showMessage('Task cannot be empty.');
                 return;
               }
 
@@ -234,25 +282,23 @@ class _HomePageState extends State<HomePage> {
 
               try {
                 await service.updateFood(food.id, name);
-                showMessage('Food updated successfully.');
               } on FirebaseException catch (e) {
                 showMessage('Firebase error: ${e.code}');
               } catch (e) {
                 showMessage('Error: $e');
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.teal,
-              foregroundColor: Colors.white,
+            child: const Text(
+              'Update',
+              style: TextStyle(color: primaryBlue),
             ),
-            child: const Text('Update'),
           ),
         ],
       ),
     );
   }
 
-  // DELETE: asks for confirmation before removing the document.
+  // DELETE: confirms before removing the selected task.
   void confirmDelete(
     BuildContext context,
     String id,
@@ -260,9 +306,9 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Food'),
+        title: const Text('Delete Task'),
         content: const Text(
-          'Are you sure you want to delete this food item?',
+          'Are you sure you want to delete this task?',
         ),
         actions: [
           TextButton(
@@ -277,7 +323,6 @@ class _HomePageState extends State<HomePage> {
 
               try {
                 await service.deleteFood(id);
-                showMessage('Food deleted successfully.');
               } on FirebaseException catch (e) {
                 showMessage('Firebase error: ${e.code}');
               } catch (e) {
@@ -286,7 +331,7 @@ class _HomePageState extends State<HomePage> {
             },
             child: const Text(
               'Delete',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: deleteRed),
             ),
           ),
         ],

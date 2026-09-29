@@ -30,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // CREATE: validates input before saving a food task to Firestore.
   Future<void> addFood() async {
     final String name = foodController.text.trim();
 
@@ -54,11 +55,12 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('Food List | ARACENA'),
+        title: const Text('Labexam2_ARACENA'),
         centerTitle: true,
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
       ),
+      // Single-page Food List interface required by the lab exam.
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -101,6 +103,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 12),
+              // READ: StreamBuilder listens to Firestore for automatic updates.
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: service.getFoods(),
@@ -191,6 +194,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // UPDATE: opens a dialog and edits the selected Firestore document.
   void openEditDialog(
     BuildContext context,
     DocumentSnapshot food,
@@ -248,6 +252,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // DELETE: asks for confirmation before removing the document.
   void confirmDelete(
     BuildContext context,
     String id,

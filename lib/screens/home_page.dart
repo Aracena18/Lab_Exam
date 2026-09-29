@@ -12,296 +12,219 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final CrudService service = CrudService();
-
-  final TextEditingController nameController =
-      TextEditingController();
-  final TextEditingController quantityController =
-      TextEditingController();
-
-  bool showFavoritesOnly = false;
+  final TextEditingController foodController = TextEditingController();
 
   @override
   void dispose() {
-    nameController.dispose();
-    quantityController.dispose();
+    foodController.dispose();
     super.dispose();
+  }
+
+  Future<void> addFood() async {
+    final String name = foodController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a food name.'),
+        ),
+      );
+      return;
+    }
+
+    await service.addFood(name);
+    foodController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade300,
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('Firebase CRUD | ARACENA'),
+        title: const Text('Food List | ARACENA'),
         centerTitle: true,
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            tooltip: 'Favorite filter',
-            onPressed: () {
-              setState(() {
-                showFavoritesOnly = !showFavoritesOnly;
-              });
-            },
-            icon: Icon(
-              showFavoritesOnly
-                  ? Icons.favorite
-                  : Icons.favorite_border,
-            ),
-          ),
-        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.teal,
-        foregroundColor: Colors.white,
-        onPressed: () => openAddDialog(context),
-        child: const Icon(Icons.add),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: service.getItems(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text('Something went wrong.'),
-            );
-          }
-
-          if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          var docs = snapshot.data!.docs;
-
-          if (showFavoritesOnly) {
-            docs = docs.where((doc) {
-              final data =
-                  doc.data() as Map<String, dynamic>;
-
-              return data['is_favorite'] == true;
-            }).toList();
-          }
-
-          if (docs.isEmpty) {
-            return Center(
-              child: Text(
-                showFavoritesOnly
-                    ? 'No favorite items.'
-                    : 'No items yet.',
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(8),
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              final item = docs[index];
-              final data =
-                  item.data() as Map<String, dynamic>;
-
-              final bool isFavorite =
-                  data['is_favorite'] == true;
-
-              return Card(
-                margin: const EdgeInsets.symmetric(
-                  vertical: 6,
-                ),
-                child: ListTile(
-                  title: Text(
-                    data['name']?.toString() ?? '',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Quantity ${data['quantity'] ?? 0}',
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Card(
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
                     children: [
-                      IconButton(
-                        tooltip: 'Favorite',
-                        onPressed: () {
-                          service.toggleFavorite(
-                            item.id,
-                            isFavorite,
-                          );
-                        },
-                        icon: Icon(
-                          isFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: isFavorite
-                              ? Colors.red
-                              : Colors.grey,
+                      Expanded(
+                        child: TextField(
+                          controller: foodController,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => addFood(),
+                          decoration: const InputDecoration(
+                            labelText: 'Food Name',
+                            hintText: 'Enter food item',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
                       ),
-                      IconButton(
-                        tooltip: 'Edit',
-                        onPressed: () {
-                          openEditDialog(
-                            context,
-                            item,
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.edit,
-                          color: Colors.orange,
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Delete',
-                        onPressed: () {
-                          confirmDelete(
-                            context,
-                            item.id,
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.delete,
-                          color: Colors.red,
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: addFood,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 18,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  void openAddDialog(BuildContext context) {
-    nameController.clear();
-    quantityController.clear();
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Add Item'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: quantityController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Quantity',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 12),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: service.getFoods(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return const Center(
+                        child: Text('Unable to load food list.'),
+                      );
+                    }
+
+                    if (!snapshot.hasData) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+
+                    final foods = snapshot.data!.docs;
+
+                    if (foods.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No food items yet.',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: foods.length,
+                      itemBuilder: (context, index) {
+                        final food = foods[index];
+                        final data =
+                            food.data() as Map<String, dynamic>;
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          child: ListTile(
+                            leading: const CircleAvatar(
+                              backgroundColor: Colors.teal,
+                              foregroundColor: Colors.white,
+                              child: Icon(Icons.restaurant),
+                            ),
+                            title: Text(
+                              data['name']?.toString() ?? '',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Edit',
+                                  onPressed: () {
+                                    openEditDialog(context, food);
+                                  },
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Delete',
+                                  onPressed: () {
+                                    confirmDelete(context, food.id);
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final String name =
-                  nameController.text.trim();
-
-              final int? quantity = int.tryParse(
-                quantityController.text.trim(),
-              );
-
-              if (name.isNotEmpty && quantity != null) {
-                service.addItem(name, quantity);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
 
   void openEditDialog(
     BuildContext context,
-    DocumentSnapshot item,
+    DocumentSnapshot food,
   ) {
-    final data =
-        item.data() as Map<String, dynamic>;
-
-    nameController.text =
-        data['name']?.toString() ?? '';
-
-    quantityController.text =
-        data['quantity']?.toString() ?? '';
+    final data = food.data() as Map<String, dynamic>;
+    final TextEditingController editController =
+        TextEditingController(
+      text: data['name']?.toString() ?? '',
+    );
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Edit Item'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: quantityController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Quantity',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Edit Food'),
+        content: TextField(
+          controller: editController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Food Name',
+            border: OutlineInputBorder(),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
             },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              final String name =
-                  nameController.text.trim();
+            onPressed: () async {
+              final String name = editController.text.trim();
 
-              final int? quantity = int.tryParse(
-                quantityController.text.trim(),
-              );
+              if (name.isNotEmpty) {
+                await service.updateFood(food.id, name);
 
-              if (name.isNotEmpty && quantity != null) {
-                service.updateItem(
-                  item.id,
-                  name,
-                  quantity,
-                );
-
-                Navigator.pop(context);
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                }
               }
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Update'),
           ),
         ],
       ),
-    );
+    ).then((_) => editController.dispose());
   }
 
   void confirmDelete(
@@ -310,22 +233,25 @@ class _HomePageState extends State<HomePage> {
   ) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete Item'),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Food'),
         content: const Text(
-          'Are you sure you want to delete this item?',
+          'Are you sure you want to delete this food item?',
         ),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
             },
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              service.deleteItem(id);
-              Navigator.pop(context);
+            onPressed: () async {
+              await service.deleteFood(id);
+
+              if (dialogContext.mounted) {
+                Navigator.pop(dialogContext);
+              }
             },
             child: const Text(
               'Delete',

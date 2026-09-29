@@ -226,13 +226,10 @@ class _HomePageState extends State<HomePage> {
                 return;
               }
 
+              Navigator.pop(dialogContext);
+
               try {
                 await service.updateFood(food.id, name);
-
-                if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext);
-                }
-
                 showMessage('Food updated successfully.');
               } on FirebaseException catch (e) {
                 showMessage('Firebase error: ${e.code}');
@@ -271,13 +268,10 @@ class _HomePageState extends State<HomePage> {
           ),
           TextButton(
             onPressed: () async {
+              Navigator.pop(dialogContext);
+
               try {
                 await service.deleteFood(id);
-
-                if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext);
-                }
-
                 showMessage('Food deleted successfully.');
               } on FirebaseException catch (e) {
                 showMessage('Firebase error: ${e.code}');

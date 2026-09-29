@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "161893312070",
+    "project_id": "lab-exam-firebase-aracena",
+    "storage_bucket": "lab-exam-firebase-aracena.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:161893312070:android:ab590f3e79eef08c884c47",
+        "android_client_info": {
+          "package_name": "com.example.lab_exam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjIStxHTNhLj8ei7tyiaEv9-3BnW-vviY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

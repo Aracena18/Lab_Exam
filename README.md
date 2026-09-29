@@ -1,21 +1,105 @@
-# Flutter Firebase CRUD Lab Exam
+# Lab Exam 2 - Flutter Firebase Food List
 
-A small, exam-friendly Flutter + Firebase Firestore CRUD reference.
+## Objective
 
-## What this project covers
+Develop a **single-page Food List Flutter mobile application** that performs CRUD operations using **Firebase Cloud Firestore**.
 
-- Create an item
-- Read items in real time with `StreamBuilder`
-- Update an item
-- Delete an item
-- Favorite / unfavorite an item
-- Favorite-only filter
-- Simple file structure that is easy to study
+The application allows the user to:
 
-## File structure
+- Add a new food task.
+- Display all saved food tasks automatically.
+- Edit an existing food task.
+- Delete a food task.
+- Prevent empty food names.
+
+## Required Interface
+
+The application includes the required components from the rubric:
+
+- AppBar: `Labexam2_ARACENA`
+- TextField for entering a food task
+- Add button
+- Food/task list
+- Edit button
+- Delete button
+
+## Firebase Connection
+
+Firebase project:
+
+```text
+lab-exam-firebase-aracena
+```
+
+Firestore collection:
+
+```text
+foods
+```
+
+Document structure:
+
+```text
+foods/{documentId}
+├── name: String
+└── created_at: Timestamp
+```
+
+The project is initialized with FlutterFire through:
+
+```text
+lib/firebase_options.dart
+android/app/google-services.json
+```
+
+## CRUD Explanation
+
+### Create
+
+The app validates the TextField and adds a new document to the `foods` collection.
+
+```dart
+foods.add({
+  'name': name,
+  'created_at': Timestamp.now(),
+});
+```
+
+### Read
+
+A Firestore snapshot stream is used with `StreamBuilder`, so the list refreshes automatically whenever Firestore data changes.
+
+```dart
+foods.orderBy('created_at', descending: true).snapshots();
+```
+
+### Update
+
+The Edit button opens an edit dialog and updates the selected document.
+
+```dart
+foods.doc(id).update({
+  'name': name,
+});
+```
+
+### Delete
+
+The Delete button opens a confirmation dialog and removes the selected document.
+
+```dart
+foods.doc(id).delete();
+```
+
+## Input Validation
+
+Empty food names are rejected. The app displays a SnackBar instead of saving an invalid task.
+
+## Code Organization
 
 ```text
 lib/
+├── firebase_options.dart
 ├── main.dart
 ├── screens/
 │   └── home_page.dart
@@ -23,91 +107,26 @@ lib/
     └── crud_service.dart
 ```
 
-## First-time setup
+- `main.dart` initializes Firebase and starts the application.
+- `home_page.dart` contains the single-page UI and input validation.
+- `crud_service.dart` contains the Firestore CRUD operations.
 
-Clone the repository:
+## Screenshots
+
+For submission, add screenshots showing:
+
+1. The running **Labexam2_ARACENA** Food List application with saved tasks.
+2. The **Add** function.
+3. The **Edit** dialog or edited result.
+4. The **Delete** confirmation/result.
+5. The Firestore `foods` collection in Firebase Console.
+
+These screenshots should be added before final submission because the rubric explicitly requires project screenshots.
+
+## Run
 
 ```bash
-git clone https://github.com/Aracena18/Lab_Exam.git
-cd Lab_Exam
-```
-
-Generate the Flutter platform folders if they are not present:
-
-```bash
-flutter create . --project-name lab_exam
-```
-
-Install the dependencies:
-
-```bash
+git pull origin main
 flutter pub get
-```
-
-Make sure Firebase CLI and FlutterFire CLI are available:
-
-```bash
-firebase --version
-flutterfire --version
-```
-
-If needed:
-
-```bash
-npm install -g firebase-tools
-dart pub global activate flutterfire_cli
-```
-
-Log in and configure Firebase:
-
-```bash
-firebase login
-flutterfire configure
-```
-
-Choose or create a Firebase project and select **Android**.
-
-Then enable Firestore in Firebase Console:
-
-```text
-Firebase Console
-→ Databases & Storage
-→ Firestore Database
-→ Create database
-```
-
-For a classroom/lab exercise, use the Firestore mode required by your instructor.
-
-Run the app:
-
-```bash
 flutter run
 ```
-
-## Firestore collection
-
-This app uses:
-
-```text
-items
-```
-
-Each document contains:
-
-```text
-name
-quantity
-created_at
-is_favorite
-```
-
-## CRUD mapping
-
-| CRUD | Flutter / Firestore |
-|---|---|
-| Create | `collection.add({...})` |
-| Read | `collection.snapshots()` |
-| Update | `doc(id).update({...})` |
-| Delete | `doc(id).delete()` |
-
-See [CHEATSHEET.md](CHEATSHEET.md) for the shortest exam-review version.

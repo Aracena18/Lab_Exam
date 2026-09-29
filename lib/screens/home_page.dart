@@ -74,17 +74,6 @@ class _HomePageState extends State<HomePage> {
             color: textBlack,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.more_horiz,
-              color: textBlack,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 14),
-        ],
       ),
 
       // Single-page layout based on the provided lab-exam reference design.
